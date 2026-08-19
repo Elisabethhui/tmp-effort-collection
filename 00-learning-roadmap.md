@@ -111,9 +111,16 @@ What → Why → How → Trade-off → Production
 
 ## 6. 当前环境门槛
 
-当前仓库没有 Python 依赖或 Lab 代码；本机检测到 Python 3.14.3，但 `torch`、`transformers`、`datasets`、`trl`、`vllm`、`langgraph`、`ragas` 都未安装。
+核心 Lab 已有独立入口，当前本机已建立项目 `.venv`，并验证 `torch 2.13.0`、`numpy 2.5.2`；Attention、SFT、Toy GRPO、RAG 指标、KV Cache 和 Durable Agent 的 20 个测试均已通过。Apple M5 当前未启用 MPS，因此这些 correctness 测试在 CPU 上运行。
 
-先建立隔离环境，再安装依赖。PyTorch 官方当前 macOS 指南将 Python 3.10～3.14 列为推荐范围；vLLM 的 Serving 实验应放在有合适 Linux/CUDA 环境的机器或云实例中。
+安装或重建核心依赖：
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r labs/requirements-core.txt
+```
+
+`transformers`、`datasets`、`trl`、`vllm`、`langgraph`、`ragas` 暂不作为核心依赖强装：它们放到对应学习周单独 pin 版本。vLLM、FSDP、真实模型 SFT 和多卡实验应放在有合适 Linux/CUDA 或明确 Apple Silicon 支持的环境中。
 
 ## 7. 学习与仓库更新门禁
 

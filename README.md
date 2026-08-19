@@ -4,6 +4,10 @@
 > 面向岗位：算法工程师 / 大模型算法工程师 / LLM Engineer / Agent Engineer / RAG Engineer / AI Infrastructure 相关岗位  
 > 定位：**系统教材 + 面试题库 + 工程实践 + 2026 真实大厂面经索引**
 
+> 快速开始：先看 [`00-learning-roadmap.md`](./00-learning-roadmap.md)，按“概念 → 代码 → 面经 → 模拟回答”推进。
+
+> 官方资源研究：[`sources/learning-resources-research.md`](./sources/learning-resources-research.md)。
+
 ---
 
 # 1. 这个仓库解决什么问题

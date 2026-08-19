@@ -1,0 +1,3 @@
+# Core CPU/MPS learning environment for the first labs.
+# PyTorch's Transformer building-block tutorial requires PyTorch 2.6.0 or later.
+torch>=2.6

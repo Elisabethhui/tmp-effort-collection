@@ -10,6 +10,7 @@ from torch.nn import functional as F
 from labs.training.label_shift import (
     IGNORE_INDEX,
     causal_lm_loss,
+    causal_lm_loss_sum_and_count,
     count_valid_shifted_targets,
     shift_causal_logits_and_labels,
 )
@@ -34,6 +35,7 @@ class CausalLossTest(unittest.TestCase):
         )
 
         actual = causal_lm_loss(logits, labels)
+        loss_sum, valid_count = causal_lm_loss_sum_and_count(logits, labels)
         shifted_logits, shifted_labels = shift_causal_logits_and_labels(logits, labels)
         expected = F.cross_entropy(
             shifted_logits.reshape(-1, 5),
@@ -42,6 +44,7 @@ class CausalLossTest(unittest.TestCase):
         )
 
         torch.testing.assert_close(actual, expected)
+        torch.testing.assert_close(loss_sum / valid_count, expected)
         actual.backward()
         self.assertIsNotNone(logits.grad)
         self.assertGreater(float(logits.grad.abs().sum()), 0.0)

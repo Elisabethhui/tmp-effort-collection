@@ -51,11 +51,32 @@ def causal_lm_loss(
     target set raises a clear error instead of returning a misleading NaN.
     """
 
+    loss_sum, valid_count = causal_lm_loss_sum_and_count(
+        logits,
+        labels,
+        ignore_index=ignore_index,
+    )
+    return (loss_sum / valid_count).to(dtype=logits.dtype)
+
+
+def causal_lm_loss_sum_and_count(
+    logits: Tensor,
+    labels: Tensor,
+    *,
+    ignore_index: int = IGNORE_INDEX,
+) -> tuple[Tensor, int]:
+    """Return the summed shifted loss and valid-token count.
+
+    Train loops use this form to make gradient accumulation exact when
+    micro-batches contain different numbers of non-ignored targets.
+    """
+
     shifted_logits, shifted_labels = shift_causal_logits_and_labels(logits, labels)
     flat_logits = shifted_logits.float().reshape(-1, shifted_logits.shape[-1])
     flat_labels = shifted_labels.reshape(-1).long()
     valid = flat_labels != ignore_index
-    if not valid.any():
+    valid_count = int(valid.sum().item())
+    if valid_count == 0:
         raise ValueError("at least one non-ignored target is required")
     losses = F.cross_entropy(
         flat_logits,
@@ -63,7 +84,7 @@ def causal_lm_loss(
         ignore_index=ignore_index,
         reduction="none",
     )
-    return losses[valid].mean().to(dtype=logits.dtype)
+    return losses[valid].sum().to(dtype=logits.dtype), valid_count
 
 
 def count_valid_shifted_targets(labels: Tensor, *, ignore_index: int = IGNORE_INDEX) -> int:

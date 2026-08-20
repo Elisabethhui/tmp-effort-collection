@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lesson 0005｜Tiny Decoder LM</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">Lesson 0005 · R4</p>
+  <h1>把 Transformer block 接成 Tiny Decoder LM</h1>
+  <p class="lede">本课把 R3 的 embedding、causal Transformer block 和 LM head 串成真实的 <code>[B,T] → [B,T,V]</code> 计算路径，仍然优先在 CPU 上验证。</p>
+  <div class="callout"><strong>胜利条件：</strong>能解释每个 shape，证明未来 token 不会改变过去 logits，并看懂 weight tying 为什么是共享参数。</div>
+
+  <h2>1. 计算图</h2>
+  <pre><code>input_ids [B,T]
+  → token_embedding + position_embedding [B,T,D]
+  → TransformerBlock × L [B,T,D]
+  → final RMSNorm [B,T,D]
+  → lm_head [B,T,V]</code></pre>
+  <p><a href="../../labs/training/tiny_lm.py">TinyDecoderLM</a> 复用了 R3 的 <a href="../../labs/attention/transformer_block.py">TransformerBlock</a>。causal mask 只允许当前位置读取过去和自己；这是 decoder-only 语言模型的必要约束。PyTorch 的 Transformer building-block 教程可以作为 API 对照，但这里保留了手写 reference 方便面试走读。</p>
+
+  <h2>2. 三个 shape 观察点</h2>
+  <table><thead><tr><th>位置</th><th>shape</th><th>面试要说清的事</th></tr></thead><tbody>
+    <tr><td>输入</td><td><code>[B,T]</code></td><td>整数 token id，不是 one-hot</td></tr>
+    <tr><td>隐藏状态</td><td><code>[B,T,D]</code></td><td>每个位置都有一个上下文表示</td></tr>
+    <tr><td>输出</td><td><code>[B,T,V]</code></td><td>每个位置对词表的未归一化分数</td></tr>
+  </tbody></table>
+  <p>weight tying 时 <code>lm_head.weight</code> 和 <code>token_embedding.weight</code> 是同一个 Parameter，不是训练后复制一份数值。这样可以在测试中用对象身份和梯度共同验证。</p>
+
+  <h2>3. Mac 验证边界</h2>
+  <table><thead><tr><th>现在可以验证</th><th>不能由本课声称</th></tr></thead><tbody><tr><td>shape、causal isolation、padding key mask、backward、CPU loss</td><td>CUDA kernel speed、HBM bandwidth、真实大模型吞吐、FSDP scaling</td></tr></tbody></table>
+
+  <h2>4. 动手</h2>
+  <pre><code>.venv/bin/python -m unittest labs/training/test_tiny_lm.py -v
+.venv/bin/python -m labs.training.train_tiny_lm --epochs 3 --device cpu</code></pre>
+  <p>第二条命令使用周期 toy corpus；它的目标是让你看到训练闭环的曲线，不是制造一个有现实语言能力的模型。</p>
+
+  <h2>5. 回忆题</h2>
+  <ol class="questions"><li>为什么 logits 的最后一维是词表大小 <code>V</code>？</li><li>把序列最后一个 token 改掉，为什么过去位置的 logits 应保持不变？</li><li>padding key mask 和 causal mask 分别阻止什么信息？</li><li>weight tying 共享了什么，仍然没有共享什么？</li></ol>
+
+  <h2>6. 交付</h2>
+  <ul><li>从 <code>input_ids</code> 追踪到 logits，写出每一步 shape；</li><li>解释一个 causal isolation 测试失败时先查 mask 还是 optimizer；</li><li>继续到 <a href="0006-r4-training-diagnostics.html">Lesson 0006：训练诊断与 checkpoint</a>。</li></ul>
+  <p class="footer">Primary sources: <a href="https://docs.pytorch.org/tutorials/intermediate/transformer_building_blocks.html">PyTorch Transformer building blocks</a> · <a href="https://cs336.stanford.edu/">Stanford CS336</a>. 有不清楚的地方，直接提出追问。</p>
+</main></body></html>

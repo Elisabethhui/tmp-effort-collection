@@ -17,6 +17,14 @@
 - [R2 基础速查](./reference/foundations.html)
 - [R3 Transformer 速查](./reference/transformer.html)
 
+## R4 训练闭环
+
+- [Lesson 0004：Causal loss 与 label shift](./lessons/0004-r4-causal-loss.html)
+- [Lesson 0005：Tiny Decoder LM](./lessons/0005-r4-tiny-decoder-lm.html)
+- [Lesson 0006：训练诊断与 checkpoint](./lessons/0006-r4-training-diagnostics.html)
+- [R4 训练闭环速查](./reference/training-loop.html)
+- [R4 训练 Labs](../labs/training/README.md)
+
 ## R2–R3 地图
 
 ```text

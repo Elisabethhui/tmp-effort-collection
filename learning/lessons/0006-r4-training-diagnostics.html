@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lesson 0006｜训练诊断与 checkpoint</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">Lesson 0006 · R4</p>
+  <h1>训练不是“loss 降了就结束”</h1>
+  <p class="lede">本课把一次参数更新、梯度累积、评估和 checkpoint 组成可恢复的训练闭环，并给出面试中可复述的故障诊断顺序。</p>
+  <div class="callout"><strong>硬件标签：</strong><code>RUNNABLE_CPU</code> 已覆盖本课；MPS 只做可选烟测，GPU 性能和多卡结论仍属于后续实验。</div>
+
+  <h2>1. 一次 update 的顺序</h2>
+  <pre><code>model.train()
+optimizer.zero_grad(set_to_none=True)
+logits = model(input_ids)
+loss_sum, valid_tokens = causal_lm_loss_sum_and_count(logits, labels)
+loss_sum.backward()
+divide gradients by valid_tokens
+clip_grad_norm_(...) → optimizer.step()</code></pre>
+  <p>PyTorch optimizer 只负责根据已有 gradient 更新参数；<a href="https://docs.pytorch.org/docs/stable/optim.html">Optimizer 文档</a>和 <a href="https://docs.pytorch.org/docs/stable/autograd.html">Autograd 文档</a>分别对应这两个边界。</p>
+
+  <h2>2. 为什么按 valid token 累积</h2>
+  <p>如果不同 micro-batch 含有不同数量的 padding 或 masked prompt，逐批取 mean 再平均会改变目标函数。<a href="../../labs/training/train_loop.py">train_loop.py</a> 先累加每批的 loss sum，最后除以整个 accumulation group 的有效 token 总数；测试会把两批累积与一批拼接进行参数对比。</p>
+  <table><thead><tr><th>观察量</th><th>含义</th><th>异常时先查</th></tr></thead><tbody>
+    <tr><td>loss</td><td>有效 token 的平均负对数似然</td><td>label shift、mask、数据、学习率</td></tr>
+    <tr><td>grad norm</td><td>更新前梯度的整体尺度</td><td>爆炸、空梯度、裁剪阈值</td></tr>
+    <tr><td>eval loss</td><td>未更新参数上的 held-out 目标</td><td>切分泄漏、过拟合、train/eval 状态</td></tr>
+  </tbody></table>
+
+  <h2>3. Checkpoint 不是只有权重</h2>
+  <p>可恢复训练至少要保存模型 <code>state_dict</code>、optimizer state、global step、配置和随机状态。<a href="../../labs/training/train_loop.py">save_checkpoint/load_checkpoint</a> 是小型 reference；PyTorch 的 <a href="https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html">保存/加载教程</a>和 <a href="https://docs.pytorch.org/docs/stable/notes/serialization.html">serialization notes</a>是 API 依据。</p>
+  <p>测试的强断言是：先训练一步、保存、恢复，再训练下一批，参数应与不间断训练一致。若不一致，优先查 optimizer state、step、随机状态和数据顺序。</p>
+
+  <h2>4. 动手</h2>
+  <pre><code>.venv/bin/python -m unittest labs/training/test_train_loop.py -v
+.venv/bin/python -m labs.training.train_tiny_lm --epochs 5 --grad-accum-steps 2 --device cpu</code></pre>
+
+  <h2>5. 诊断顺序</h2>
+  <ol><li>shape / dtype / device；</li><li>label shift / ignore mask / 有效 token 数；</li><li>梯度是否存在、是否 finite、是否被裁剪；</li><li>optimizer 是否 step、学习率和 weight decay 是否合理；</li><li>train/eval 状态、数据切分和重复样本；</li><li>最后才考虑扩大模型或更换架构。</li></ol>
+
+  <h2>6. 回忆题与交付</h2>
+  <ol class="questions"><li>为什么保存 optimizer state 会影响 resume 等价性？</li><li>一个 loss 变 NaN 时，为什么不应先换模型？</li><li>gradient accumulation 的分母应该是 micro-batch 数还是 valid token 数？</li><li>eval loss 变差而 train loss 继续下降，至少给出两个解释。</li></ol>
+  <ul><li>保存一次 toy checkpoint，并写出其中的五类字段；</li><li>用 3 分钟口述训练故障排查；</li><li>通过 R4 包的 acceptance gate 后，才建立学习记录或晋级 knowledge。</li></ul>
+  <p class="footer">Primary sources: <a href="https://docs.pytorch.org/docs/stable/optim.html">PyTorch Optimizers</a> · <a href="https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html">Saving and Loading Models</a> · <a href="https://cs336.stanford.edu/">Stanford CS336</a>. 有不清楚的地方，直接提出追问。</p>
+</main></body></html>

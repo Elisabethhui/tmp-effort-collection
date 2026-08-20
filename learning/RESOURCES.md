@@ -28,6 +28,15 @@
 - [vLLM V1 BlockPool](https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/block_pool.py)
 - [vLLM prefix caching design](https://github.com/vllm-project/vllm/blob/main/docs/design/prefix_caching.md)
 
+## R4 训练闭环
+
+- [PyTorch Autograd](https://docs.pytorch.org/docs/stable/autograd.html)
+- [PyTorch Optimizers](https://docs.pytorch.org/docs/stable/optim.html)
+- [PyTorch saving and loading models](https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html)
+- [PyTorch serialization notes](https://docs.pytorch.org/docs/stable/notes/serialization.html)
+- [PyTorch Transformer building blocks](https://docs.pytorch.org/tutorials/intermediate/transformer_building_blocks.html)
+- [Stanford CS336: Language Modeling from Scratch](https://cs336.stanford.edu/)
+
 ## 使用规则
 
 1. 论文用于推导，官方文档用于 API，源码用于调用链和边界；

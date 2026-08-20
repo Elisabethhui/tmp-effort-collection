@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lesson 0004｜Causal loss 与 label shift</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">Lesson 0004 · R4</p>
+  <h1>一个 logits，为什么要右移一个 token？</h1>
+  <p class="lede">本课只完成一个胜利：从 <code>[B,T,V]</code> 的 logits 对齐到下一个 token 的标签，并用有效 token 数量得到可信的 causal LM loss。</p>
+  <div class="callout"><strong>今天的边界：</strong>只讲目标函数和验证；模型、优化器和 checkpoint 放到 <a href="0005-r4-tiny-decoder-lm.html">Lesson 0005</a>、<a href="0006-r4-training-diagnostics.html">Lesson 0006</a>。</div>
+
+  <h2>1. 预测关系</h2>
+  <p>输入序列 <code>x<sub>0</sub>, x<sub>1</sub>, …, x<sub>T-1</sub></code> 在位置 <code>t</code> 只能看到当前位置及其之前的 token。位置 <code>t</code> 的 logits 要预测 <code>x<sub>t+1</sub></code>，所以最后一个 logits 没有下一个目标。</p>
+  <table><thead><tr><th>原张量</th><th>参与 loss 的切片</th><th>含义</th></tr></thead><tbody>
+    <tr><td><code>logits</code>：<code>[B,T,V]</code></td><td><code>logits[:, :-1, :]</code>：<code>[B,T-1,V]</code></td><td>位置 0…T-2 的预测分数</td></tr>
+    <tr><td><code>labels</code>：<code>[B,T]</code></td><td><code>labels[:, 1:]</code>：<code>[B,T-1]</code></td><td>位置 1…T-1 的真实下一个 token</td></tr>
+  </tbody></table>
+  <p>这正是 <a href="../../labs/training/label_shift.py">label_shift.py</a> 中的显式实现；先读代码中的 shape 检查，再看 <a href="../reference/training-loop.html">R4 速查</a>。</p>
+
+  <h2>2. 有效 token 才能进入分母</h2>
+  <p>prompt、padding 或不可训练的位置用 <code>IGNORE_INDEX = -100</code> 标记。loss 先对有效位置求和，再除以有效 token 数；不能把所有 <code>B×(T-1)</code> 位置直接当分母。</p>
+  <pre><code>shifted_logits, shifted_labels = shift_causal_logits_and_labels(logits, labels)
+loss_sum, valid_tokens = causal_lm_loss_sum_and_count(logits, labels)
+loss = loss_sum / valid_tokens</code></pre>
+  <p>PyTorch 的 autograd 会记录前向操作并在 <code>backward()</code> 时计算梯度；loss 的 shape 和归一化方式仍由我们负责。参阅 <a href="https://docs.pytorch.org/docs/stable/autograd.html">Autograd 文档</a>。</p>
+
+  <h2>3. 动手验证</h2>
+  <pre>.venv/bin/python -m unittest labs/training/test_label_shift.py -v</pre>
+  <p>测试会反馈四件事：shift 形状、与 PyTorch cross entropy 的一致性、全是 ignore 时拒绝返回 NaN、以及 loss 能反向传播。</p>
+
+  <h2>4. 回忆题（先不要看代码）</h2>
+  <ol class="questions"><li>为什么最后一个位置的 logits 不进入 next-token loss？</li><li>为什么 labels 要取 <code>[:, 1:]</code>，而 logits 取 <code>[:, :-1]</code>？</li><li>如果一个 batch 的有效 token 数比另一个少一半，盲目平均会造成什么偏差？</li><li>全是 padding 的 batch 应该返回 0、NaN，还是抛出错误？为什么？</li></ol>
+
+  <h2>5. 交付</h2>
+  <ul><li>在纸上画出一行 <code>[B,T,V]</code> 到 <code>[B,T-1,V]</code> 的箭头；</li><li>用 30 秒解释 label shift；</li><li>带着测试输出进入 <a href="0005-r4-tiny-decoder-lm.html">下一课：Tiny Decoder LM</a>。</li></ul>
+  <p class="footer">Primary sources: <a href="https://docs.pytorch.org/docs/stable/autograd.html">PyTorch Autograd</a> · <a href="https://cs336.stanford.edu/">Stanford CS336</a>. 有不清楚的地方，直接提出追问。</p>
+</main></body></html>

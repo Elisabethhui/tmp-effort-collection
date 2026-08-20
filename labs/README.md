@@ -7,6 +7,7 @@
 | 能力 | 入口 | 运行命令 |
 |---|---|---|
 | 算法 / 数学基础 | [`foundations/README.md`](./foundations/README.md) | `.venv/bin/python -m unittest labs/foundations/test_algorithms.py labs/foundations/test_math_ops.py -v` |
+| R4 训练闭环 / Decoder LM | [`training/README.md`](./training/README.md) | `.venv/bin/python -m unittest labs/training/test_label_shift.py labs/training/test_tiny_lm.py labs/training/test_train_loop.py -v` |
 | Multi-Head Attention | [`attention/README.md`](./attention/README.md) | `.venv/bin/python -m unittest labs/attention/test_mha.py -v` |
 | Transformer Block / RoPE / GQA | [`attention/README.md`](./attention/README.md) | `.venv/bin/python -m unittest labs/attention/test_transformer_block.py -v` |
 | Answer-only SFT loss | [`posttraining/README.md`](./posttraining/README.md) | `.venv/bin/python -m unittest labs/posttraining/test_sft_loss.py -v` |

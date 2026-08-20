@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>R4 训练闭环速查</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">Reference · R4</p>
+  <h1>训练闭环与 Decoder LM 速查</h1>
+  <p class="lede">一张用于面试回忆和 Lab 走读的压缩卡。完整解释请回到 <a href="../lessons/0004-r4-causal-loss.html">Lesson 0004</a>、<a href="../lessons/0005-r4-tiny-decoder-lm.html">Lesson 0005</a>、<a href="../lessons/0006-r4-training-diagnostics.html">Lesson 0006</a>。</p>
+
+  <h2>1. Shape 主线</h2>
+  <pre><code>input_ids      [B, T]
+embedding      [B, T, D]
+decoder blocks [B, T, D]
+lm_head        [B, T, V]
+shift logits   [B, T-1, V]
+shift labels   [B, T-1]</code></pre>
+
+  <h2>2. Causal objective</h2>
+  <p>位置 <code>t</code> 预测下一个 token <code>x<sub>t+1</sub></code>，所以：</p>
+  <pre><code>shifted_logits = logits[:, :-1, :]
+shifted_labels = labels[:, 1:]
+loss = sum(valid token NLL) / number of valid targets</code></pre>
+  <p><code>IGNORE_INDEX = -100</code> 用于 prompt/padding 等不应参与监督的位置。全是 ignore 时应显式报错，不能把 NaN 当成训练结果。</p>
+
+  <h2>3. Update 与 accumulation</h2>
+  <pre><code>zero_grad → forward → loss_sum.backward()
+         → accumulate loss_sum and valid_tokens
+         → divide gradients by total valid_tokens
+         → clip → optimizer.step()</code></pre>
+  <table><thead><tr><th>字段</th><th>诊断问题</th></tr></thead><tbody>
+    <tr><td>loss</td><td>标签对齐、mask、数据、学习率是否合理？</td></tr>
+    <tr><td>valid_tokens</td><td>这个 batch 是否被 padding 或 prompt mask 稀释？</td></tr>
+    <tr><td>grad_norm</td><td>梯度是否为空、爆炸或被频繁裁剪？</td></tr>
+    <tr><td>eval_loss</td><td>是否过拟合、泄漏或 train/eval 状态错误？</td></tr>
+  </tbody></table>
+
+  <h2>4. Checkpoint 清单</h2>
+  <ul><li>模型 <code>state_dict</code>；</li><li>optimizer state（如 Adam 的 moments）；</li><li>global step / epoch；</li><li>模型配置与数据/实验版本；</li><li>随机状态和恢复位置。</li></ul>
+
+  <h2>5. Mac 证据标签</h2>
+  <table><thead><tr><th>标签</th><th>本 R4 能说什么</th></tr></thead><tbody><tr><td><code>RUNNABLE_CPU</code></td><td>shape、loss、backward、训练曲线、resume</td></tr><tr><td><code>MPS_OPTIONAL</code></td><td>tiny smoke test 能否运行</td></tr><tr><td><code>SOURCE_READ</code></td><td>PyTorch autograd/optimizer/serialization API 对照</td></tr><tr><td><code>REMOTE_GPU</code></td><td>本课不覆盖 CUDA kernel、吞吐和多卡性能</td></tr></tbody></table>
+
+  <h2>6. 高频回答骨架</h2>
+  <ol><li>先给结论：训练目标、shape 或故障现象；</li><li>再给机制：公式、梯度路径和分母；</li><li>最后给证据：测试、实验、硬件和限制。</li></ol>
+  <p class="footer">Sources: <a href="https://docs.pytorch.org/docs/stable/autograd.html">Autograd</a> · <a href="https://docs.pytorch.org/docs/stable/optim.html">Optimizers</a> · <a href="https://docs.pytorch.org/docs/stable/notes/serialization.html">Serialization</a> · <a href="https://cs336.stanford.edu/">CS336</a>.</p>
+</main></body></html>

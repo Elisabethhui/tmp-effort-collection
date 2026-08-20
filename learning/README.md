@@ -2,6 +2,8 @@
 
 这是当前阶段的完整学习入口。后续 SFT、Serving、RAG、Agent 先保留在总路线中，不在本阶段展开。
 
+如果你不确定资料从哪里开始，请先看项目根目录的 [START-HERE](../START-HERE.md) 和 [内容地图](./content-map.md)。
+
 ## 入口
 
 1. 先读 [使命](./MISSION.md) 和 [课程地图](./curriculum-r2-r3.md)；

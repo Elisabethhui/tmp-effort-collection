@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lesson 0003｜Transformer Block</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">Lesson 0003 · R3</p>
+  <h1>把 Attention 组装成 Decoder Block</h1>
+  <p class="lede">本课把 MHA、RoPE、GQA、RMSNorm、Residual 和 SwiGLU 串起来；GPU kernel 仍然不在本机通过条件里。</p>
+  <h2>1. Pre-Norm block</h2>
+  <pre>h = x + Attention(RMSNorm(x))
+y = h + SwiGLU(RMSNorm(h))</pre>
+  <p>Residual 保留信息和梯度通路；Norm 控制激活尺度；FFN 在每个 token 上提供非线性容量。</p>
+  <h2>2. RoPE 的最小理解</h2>
+  <p>RoPE 不把位置向量直接加到 embedding，而是按 position 旋转 Q/K 的偶奇维度。position 0 的 sin=0、cos=1，因此是 identity；V 不做旋转。</p>
+  <h2>3. Mac 验证边界</h2>
+  <table><thead><tr><th>可在 Mac 验证</th><th>暂不声称</th></tr></thead><tbody><tr><td>shape、mask、数值、backward、causal isolation、CPU reference</td><td>CUDA kernel speed、HBM bandwidth、vLLM throughput、FSDP scaling</td></tr></tbody></table>
+  <h2>4. 动手</h2>
+  <pre>.venv/bin/python -m unittest labs/attention/test_transformer_block.py -v</pre>
+  <p>完成一次代码走读：从 <code>forward</code> 追到 <code>apply_rope</code>、<code>repeat_kv</code>、mask、FFN，再回到输出 shape。</p>
+  <h2>5. 回忆题</h2>
+  <ol class="questions"><li>RMSNorm 与 LayerNorm 少了哪一步？带来什么工程影响？</li><li>为什么 GQA 的 K/V 可以 repeat，而不能随意 repeat Q？</li><li>SwiGLU 的 gate 和 value 各自做什么？</li><li>Transformer block 的哪一部分决定了 KV Cache 的存储？</li></ol>
+  <p class="footer">Primary sources: <a href="https://huggingface.co/docs/transformers/internal/rope_utils">Transformers RoPE utilities</a> · <a href="https://huggingface.co/docs/transformers/main/cache_explanation">Transformers Cache explanation</a>. 有不清楚的地方，直接提出追问。</p>
+</main></body></html>

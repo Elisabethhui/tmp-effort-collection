@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lesson 0001｜R2 基础</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">Lesson 0001 · R2</p>
+  <h1>把“基础”变成可验证的代码</h1>
+  <p class="lede">本课的胜利条件不是记住一堆名词，而是能从输入、shape、公式、更新和失败路径解释一个最小训练问题。</p>
+  <div class="callout"><strong>今天只做一个闭环：</strong>算法不变量 → stable math → PyTorch tensor/device → 测试。</div>
+  <h2>1. 三个必须稳定的 mental model</h2>
+  <div class="card"><h3>算法</h3><p>先说不变量，再说数据结构，最后给复杂度。比如 top-k 的 heap 只保留当前最大的 k 个元素，因此每个新值最多触发一次 <code>log k</code> 调整。</p></div>
+  <div class="card"><h3>数值</h3><p>softmax 的核心不是公式本身，而是先减去最大 logit，避免指数溢出；cross entropy 可以直接在 logits 上用 log-sum-exp 计算。</p></div>
+  <div class="card"><h3>训练</h3><p>训练 bug 的顺序通常是 shape/dtype/device → labels/loss → gradient → optimizer → train/eval → 数据和学习率。不要一上来改模型结构。</p></div>
+  <h2>2. 动手</h2>
+  <pre>.venv/bin/python -m unittest \
+  labs/foundations/test_algorithms.py \
+  labs/foundations/test_math_ops.py -v</pre>
+  <p>打开 <a href="../../labs/foundations/algorithms.py">algorithms.py</a> 和 <a href="../../labs/foundations/math_ops.py">math_ops.py</a>，逐个指出每个函数的输入、输出、边界和复杂度。</p>
+  <h2>3. 回忆题（先遮住答案）</h2>
+  <ol class="questions"><li>为什么 heap top-k 是 O(n log k)，而不是 O(n log n)？</li><li>为什么 softmax 减 max 不改变结果？</li><li>为什么 logits 版 cross entropy 比“先 softmax 再 log”稳定？</li><li>一个 loss 有数值但参数不更新，依次查什么？</li></ol>
+  <h2>4. 交付</h2>
+  <ul><li>画一张从 logits 到 loss 的数据流；</li><li>口述两道题的 30 秒答案；</li><li>记录一个你原来容易混淆的 shape/dtype/device 问题。</li></ul>
+  <p class="footer">Primary sources: <a href="https://docs.pytorch.org/tutorials/beginner/basics/intro.html">PyTorch Learn the Basics</a> · <a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/">MIT 6.006</a>. 有不清楚的地方，直接提出追问。</p>
+</main></body></html>

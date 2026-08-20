@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>R2 基础速查</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">R2 reference</p>
+  <h1>算法、数学与 PyTorch 基础速查</h1>
+  <p class="lede">这张卡只保留面试时需要快速回忆的公式、复杂度和诊断顺序。详细学习顺序见 <a href="../curriculum-r2-r3.md">课程地图</a>。</p>
+  <h2>算法不变量</h2>
+  <table><thead><tr><th>模式</th><th>核心不变量</th><th>复杂度</th></tr></thead><tbody>
+    <tr><td>heap top-k</td><td>堆中保留当前最大的 k 个元素</td><td>O(n log k)</td></tr>
+    <tr><td>BFS</td><td>队列按距离层扩展，首次到达即最短</td><td>O(V+E)</td></tr>
+    <tr><td>LRU</td><td>哈希表定位节点，链表头为最近使用</td><td>get/put O(1)</td></tr>
+    <tr><td>滑动窗口</td><td>窗口始终满足当前约束，右扩左缩</td><td>通常 O(n)</td></tr>
+  </tbody></table>
+  <h2>数值公式</h2>
+  <pre>softmax(z)i = exp(zi - max(z)) / Σj exp(zj - max(z))
+CE = -log p(y|x)
+KL(P||Q) = Σx P(x) [log P(x) - log Q(x)]
+m_t = β1 m_(t-1) + (1-β1) g_t
+v_t = β2 v_(t-1) + (1-β2) g_t²
+m̂_t = m_t / (1-β1^t),  v̂_t = v_t / (1-β2^t)</pre>
+  <h2>PyTorch 诊断顺序</h2>
+  <ol><li>shape、dtype、device 是否一致；</li><li>loss 是否可计算且 labels 是否错位；</li><li>梯度是否为 None/NaN；</li><li>optimizer 是否真正更新；</li><li>train/eval、dropout、padding 和 checkpoint 是否正确。</li></ol>
+  <h2>速问</h2>
+  <ul class="questions"><li>为什么 logits 不应该先手动 softmax 再交给 cross entropy？</li><li>为什么 top-k 不需要完整排序？</li><li>Adam 的 bias correction 解决什么问题？</li></ul>
+  <p class="footer">Source: <a href="https://docs.pytorch.org/tutorials/beginner/basics/intro.html">PyTorch Learn the Basics</a> · <a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/">MIT 6.006</a></p>
+</main></body></html>

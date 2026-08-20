@@ -6,7 +6,9 @@
 
 | 能力 | 入口 | 运行命令 |
 |---|---|---|
+| 算法 / 数学基础 | [`foundations/README.md`](./foundations/README.md) | `.venv/bin/python -m unittest labs/foundations/test_algorithms.py labs/foundations/test_math_ops.py -v` |
 | Multi-Head Attention | [`attention/README.md`](./attention/README.md) | `.venv/bin/python -m unittest labs/attention/test_mha.py -v` |
+| Transformer Block / RoPE / GQA | [`attention/README.md`](./attention/README.md) | `.venv/bin/python -m unittest labs/attention/test_transformer_block.py -v` |
 | Answer-only SFT loss | [`posttraining/README.md`](./posttraining/README.md) | `.venv/bin/python -m unittest labs/posttraining/test_sft_loss.py -v` |
 | Toy GRPO objective | [`posttraining/README.md`](./posttraining/README.md) | `.venv/bin/python -m unittest labs/posttraining/test_grpo_toy.py -v` |
 | RAG retrieval metrics / RRF | [`rag/README.md`](./rag/README.md) | `.venv/bin/python -m unittest labs/rag/test_metrics.py -v` |

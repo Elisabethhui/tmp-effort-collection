@@ -35,3 +35,22 @@ python -m unittest labs/attention/test_mha.py -v
 4. padding token 不参与 key/value 聚合；
 5. 修改 padded value 不影响非 padded query 的输出；
 6. 能解释 `sqrt(d_head)`、mask 广播和 `contiguous()` 的原因。
+
+## Transformer Block 扩展
+
+[`transformer_block.py`](./transformer_block.py) 在 MHA 之上加入：
+
+- pre-norm residual；
+- RMSNorm；
+- RoPE；
+- GQA 的 K/V head repeat；
+- SwiGLU FFN；
+- causal future-isolation 测试。
+
+运行：
+
+```bash
+python -m unittest labs/attention/test_transformer_block.py -v
+```
+
+这是 `RUNNABLE_CPU` 的 reference implementation，不代表 FlashAttention、PagedAttention 或 CUDA kernel 性能。

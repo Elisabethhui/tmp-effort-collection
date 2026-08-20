@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>R3 Transformer 速查</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">R3 reference</p>
+  <h1>Transformer 主干速查</h1>
+  <p class="lede">面试先追踪 shape，再解释公式，最后讨论显存、延迟和实现边界。</p>
+  <h2>Decoder-only 数据流</h2>
+  <pre>input_ids [B,T]
+  → embedding [B,T,D]
+  → N × decoder block [B,T,D]
+  → final norm [B,T,D]
+  → lm_head [B,T,V]
+  → next-token logits</pre>
+  <h2>Attention</h2>
+  <pre>Q = XWQ, K = XWK, V = XWV
+scores = QKᵀ / √Dh + mask
+A = softmax(scores)
+O = AV
+
+internal: [B,T,D] → [B,H,T,Dh]</pre>
+  <h2>结构差异</h2>
+  <table><thead><tr><th>结构</th><th>Q heads</th><th>K/V heads</th><th>主要影响</th></tr></thead><tbody>
+    <tr><td>MHA</td><td>H</td><td>H</td><td>表达充分，KV cache 大</td></tr>
+    <tr><td>MQA</td><td>H</td><td>1</td><td>KV cache 小，可能牺牲表达</td></tr>
+    <tr><td>GQA</td><td>H</td><td>Hkv</td><td>折中；Hkv 必须整除 H</td></tr>
+  </tbody></table>
+  <h2>Block</h2>
+  <pre>h = x + Attention(Norm(x))
+y = h + SwiGLU(Norm(h))
+
+RMSNorm(x) = x / √(mean(x²)+ε) · weight</pre>
+  <h2>KV Cache 关键句</h2>
+  <div class="callout">Prefill 一次处理 prompt；decode 每步只计算新 token 的 Q/K/V，并复用每层历史 K/V。KV cache 主要减少重复计算，不是把所有 attention 复杂度神奇地变成线性。</div>
+  <h2>速问</h2>
+  <ul class="questions"><li>为什么除以 √Dh？</li><li>为什么 causal mask 要在 softmax 前应用？</li><li>为什么 KV cache 不缓存 Q？</li><li>FlashAttention 和 PagedAttention 分别解决什么问题？</li></ul>
+  <p class="footer">Source: <a href="https://docs.pytorch.org/tutorials/intermediate/transformer_building_blocks.html">PyTorch Transformer building blocks</a> · <a href="https://huggingface.co/docs/transformers/main/cache_explanation">Transformers Cache explanation</a></p>
+</main></body></html>

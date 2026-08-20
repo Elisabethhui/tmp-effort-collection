@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lesson 0002｜Attention Shapes</title><link rel="stylesheet" href="../assets/course.css"></head>
+<body><main>
+  <p class="eyebrow">Lesson 0002 · R3</p>
+  <h1>先追 shape，再理解 Attention</h1>
+  <p class="lede">Transformer 面试最常见的失分不是不会公式，而是说不清每一次 reshape、transpose、mask 和复杂度。</p>
+  <h2>1. 从 X 到 O</h2>
+  <pre>X [B,T,D]
+Q=XWQ, K=XWK, V=XWV
+split → [B,H,T,Dh],  D = H·Dh
+scores = Q @ Kᵀ / √Dh  → [B,H,T,T]
+mask + softmax → [B,H,T,T]
+context = A @ V          → [B,H,T,Dh]
+merge → [B,T,D]
+Wo → [B,T,D]</pre>
+  <h2>2. 三个“为什么”</h2>
+  <div class="card"><h3>为什么除 √Dh？</h3><p>点积方差随维度增长，softmax 更容易饱和；缩放让梯度区间更可用。</p></div>
+  <div class="card"><h3>为什么 mask 在 softmax 前？</h3><p>被屏蔽位置必须在归一化分母中消失；把概率算完再乘 mask 会留下错误归一化。</p></div>
+  <div class="card"><h3>为什么 MQA/GQA 影响推理？</h3><p>Query head 可以很多，但 K/V head 更少，历史 K/V 的存储量按 <code>Hkv</code> 缩小。</p></div>
+  <h2>3. 动手</h2>
+  <pre>.venv/bin/python -m unittest \
+  labs/attention/test_mha.py \
+  labs/attention/test_transformer_block.py -v</pre>
+  <p>阅读 <a href="../../labs/attention/transformer_block.py">transformer_block.py</a>，找出 Q/K/V 的投影、RoPE、GQA repeat、causal mask、RMSNorm 和 SwiGLU。</p>
+  <h2>4. 回忆题</h2>
+  <ol class="questions"><li>如果 B=2、T=5、D=16、H=4，Q/K/V 和 scores 的 shape 是什么？</li><li>padding mask 应该屏蔽 key、query，还是两者？为什么？</li><li>GQA 中 H=16、Hkv=4 时，每个 K/V head 被重复几次？</li><li>未来 token 改变后，为什么 causal block 的过去位置输出不应改变？</li></ol>
+  <p class="footer">Primary source: <a href="https://docs.pytorch.org/tutorials/intermediate/transformer_building_blocks.html">PyTorch Transformer building blocks</a>. 有不清楚的地方，直接提出追问。</p>
+</main></body></html>
